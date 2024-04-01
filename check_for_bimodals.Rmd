@@ -1,0 +1,61 @@
+---
+title: "check_for_distributions"
+author: "Martyna"
+date: "2024-03-31"
+output: pdf_document
+---
+
+```{r}
+library(brms)
+```
+
+```{r}
+data<- read.csv('data/df_ddm.csv')
+```
+
+1. Gaussian Distribution Model
+This first model assumes that the reaction times follow a Gaussian (normal) distribution. It's a straightforward model where sacc_time is predicted by the intercept alone 
+
+```{r}
+# Model with Gaussian distribution
+gaussian_model <- brm(
+  formula = sacc_time ~ 1, 
+  data = data, 
+  family = gaussian()
+)
+```
+2. Mixture of Two Gaussians Model
+For the second model, we assume a bimodal distribution by modeling the data as a mixture of two Gaussians. This model is more complex and can capture data that m
+
+```{r}
+# Model with a mixture of two Gaussians
+bimodal_model <- brm(
+  formula = sacc_time ~ 1, 
+  data = data, 
+  family = mixture(gaussian, gaussian),
+  chains = 2, iter = 4000 # Adjust these parameters as needed
+)
+
+summary(bimodal_model)
+
+```
+
+3. Model with a Proportion Parameter (Theta)
+The third model involves specifying a distribution that allows for adjusting the proportion of the distribution across different components, such as the arms of a beta distribution or the components in a mixture model. 
+
+Here, I'm using a mixture model as an example to include a proportion parameter (theta), which controls the mixture between the two Gaussian components
+
+```{r}
+# Model with a proportion parameter theta in a mixture of two Gaussians
+theta_model <- brm(
+  formula = sacc_time ~ 1, 
+  data = data, 
+  family = mixture(gaussian, gaussian),
+  prior = c(set_prior("normal(0,5)", class = "b"),
+            set_prior("lkj(2)", class = "cor"),
+            set_prior("dirichlet(1,1)", class = "theta")), # Prior for theta
+  chains = 2, iter = 4000 
+)
+
+summary(theta_model)
+```
